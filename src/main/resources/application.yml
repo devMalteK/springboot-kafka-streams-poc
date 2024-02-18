@@ -1,0 +1,15 @@
+server:
+  port: 5001
+
+springdoc:
+  api-docs:
+    path: "/api-docs"
+  swagger-ui:
+    path: "/swagger-ui-custom.html"
+
+app:
+  kafka-bootstrap-server: "http://localhost:9094"
+  consumer-group: ${k8s_pod_name:${HOSTNAME:UNKNOWN}}
+  subscription-topic: "subscription"
+  win-topic: "win"
+  win-notification-topic: "win-notification"

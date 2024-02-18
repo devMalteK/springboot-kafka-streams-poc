@@ -1,0 +1,9 @@
+variables:
+  DOCKER_IMAGE_NAME: "sbkastp"
+  JAVA_BUILD_VERSION: "17"
+
+include:
+  - project: 'kochnetonline/gitlab-pipelines'
+    ref: "1.0.1"
+    file: 'maven-pipeline.gitlab-ci.yml'
+
