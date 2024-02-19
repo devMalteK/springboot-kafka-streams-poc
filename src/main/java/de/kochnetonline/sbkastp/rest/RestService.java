@@ -45,4 +45,20 @@ public class RestService {
         eventProducerService.sendWinEvent(customerId, true);
         log.info("win generated [{}]", customerId);
     }
+
+    @PutMapping("/testdatagenerator/start")
+    @ResponseStatus(HttpStatus.OK)
+    @Tag(name = "Testdatagenerator", description = "Testdatagenerator bulk load")
+    public void testdatageneratorStart() {
+        eventProducerService.startBulkLoad();
+        log.info("Testdatagenerator bulk load");
+    }
+
+    @PutMapping("/testdatagenerator/stop")
+    @ResponseStatus(HttpStatus.OK)
+    @Tag(name = "Testdatagenerator", description = "Testdatagenerator bulk load")
+    public void testdatageneratorStop() {
+        eventProducerService.stopBulkLoad();
+        log.info("Testdatagenerator bulk load");
+    }
 }
