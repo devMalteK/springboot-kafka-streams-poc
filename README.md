@@ -7,7 +7,7 @@ a notification event is pushed into a new Kafka topic, so it can be consumed by 
 The main goal is to try out Kafka streams and see if this could be a way to build a subscription service without having
 to maintain a separate topic for each customer.
 
-![alt text](https://github.com/[username]/[reponame]/blob/[branch]/image.jpg?raw=true)
+![alt text](https://github.com/devMalteK/springboot-kafka-streams-poc/blob/main/docs/drawio/Process%20Diagramm.drawio.svg)
 
 ## POC-focus
 
