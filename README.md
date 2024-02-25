@@ -48,6 +48,7 @@ Record-Count (the Subscription) and the other Topic has thousands/millions of re
       Just open the url in a separate browser tab before you start generating data.
 
 ![alt text](https://github.com/devMalteK/springboot-kafka-streams-poc/blob/main/docs/SwaggerScreenshot.png)
+![alt text](https://github.com/devMalteK/springboot-kafka-streams-poc/blob/main/docs/Notification_Demo.gif)
 
 ## Conclusion
 
