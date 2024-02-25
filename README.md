@@ -23,7 +23,6 @@ Record-Count (the Subscription) and the other Topic has thousands/millions of re
 - (local docker installed)
 - java-version: graal-vm-ce-17
 - checkout project
-- docker-compose -f docker-compose-kafka.yml up (kafka-broker & ui)
 - maven clean install
 - docker-compose -p kafka-streams-poc-app -f docker-compose.yml up --force-recreate --build --remove-orphans
 
