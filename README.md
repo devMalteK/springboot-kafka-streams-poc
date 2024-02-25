@@ -1,6 +1,6 @@
-# springboot-kafka-native-poc
+# springboot-kafka-streams-poc
 
-simple App that simulates an EMail subscription service for delivered Parcels.
+A simple App that simulates an EMail subscription service for delivered Parcels.
 you can subscribe customers to the service and if a parcel is successfully delivered
 a notification event is pushed into a new Kafka topic, so it can be consumed by the email-service.
 
@@ -32,6 +32,21 @@ Record-Count (the Subscription) and the other Topic has thousands/millions of re
 - KafkaUI: http://localhost:8080/
 - Swagger for Testing: http://localhost:5001/swagger-ui-custom.html
 - Webflux Reactive Endpoint: http://localhost:5001/getNotifications
+
+## How to use it
+
+- use KafkaUi if you want to monitor the Topic contents
+- use Swagger for Simple Testing
+    - generate Subscription for Customer via /subscribe
+    - generate a "delivered" Parcel via /delivery/event/generate
+    - you should now find your notification in the "notification" topic
+- use Swagger for Bulk Load Testing
+    - start bulk load via /testdatagenerator/start
+    - watch what happens in the kafka-ui
+- use the webflux endpoint to get all notification via text-event-streaming
+    - http://localhost:5001/getNotifications
+    - sadly you can't do that via swagger, because swagger doesn't show the sent Events while the Stream is still open.
+      Just open the url in a separate browser tab before you start generating data.
 
 ## Conclusion
 
