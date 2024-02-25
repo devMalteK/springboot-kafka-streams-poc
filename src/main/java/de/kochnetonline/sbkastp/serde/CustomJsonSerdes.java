@@ -1,9 +1,9 @@
 package de.kochnetonline.sbkastp.serde;
 
 import de.kochnetonline.sbkastp.model.CustomerKey;
-import de.kochnetonline.sbkastp.model.Subscription;
-import de.kochnetonline.sbkastp.model.Win;
-import de.kochnetonline.sbkastp.model.WinNotification;
+import de.kochnetonline.sbkastp.model.NotificationEvent;
+import de.kochnetonline.sbkastp.model.ParcelDeliveryEvent;
+import de.kochnetonline.sbkastp.model.SubscriptionEvent;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 
@@ -15,23 +15,21 @@ public class CustomJsonSerdes {
         return Serdes.serdeFrom(serializer, deserializer);
     }
 
-    public static Serde<Subscription> Subscription() {
-        JsonSerializer<Subscription> serializer = new JsonSerializer<>();
-        JsonDeserializer<Subscription> deserializer = new JsonDeserializer<>(Subscription.class);
+    public static Serde<SubscriptionEvent> Subscription() {
+        JsonSerializer<SubscriptionEvent> serializer = new JsonSerializer<>();
+        JsonDeserializer<SubscriptionEvent> deserializer = new JsonDeserializer<>(SubscriptionEvent.class);
         return Serdes.serdeFrom(serializer, deserializer);
     }
 
-    public static Serde<Win> Win() {
-        JsonSerializer<Win> serializer = new JsonSerializer<>();
-        JsonDeserializer<Win> deserializer = new JsonDeserializer<>(Win.class);
+    public static Serde<ParcelDeliveryEvent> ParcelDelivery() {
+        JsonSerializer<ParcelDeliveryEvent> serializer = new JsonSerializer<>();
+        JsonDeserializer<ParcelDeliveryEvent> deserializer = new JsonDeserializer<>(ParcelDeliveryEvent.class);
         return Serdes.serdeFrom(serializer, deserializer);
     }
 
-    public static Serde<WinNotification> WinNotification() {
-        JsonSerializer<WinNotification> serializer = new JsonSerializer<>();
-        JsonDeserializer<WinNotification> deserializer = new JsonDeserializer<>(WinNotification.class);
+    public static Serde<NotificationEvent> Notification() {
+        JsonSerializer<NotificationEvent> serializer = new JsonSerializer<>();
+        JsonDeserializer<NotificationEvent> deserializer = new JsonDeserializer<>(NotificationEvent.class);
         return Serdes.serdeFrom(serializer, deserializer);
     }
-
-
 }

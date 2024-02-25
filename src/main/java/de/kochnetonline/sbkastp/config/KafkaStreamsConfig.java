@@ -13,10 +13,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
-import org.springframework.kafka.annotation.EnableKafkaStreams;
 import org.springframework.kafka.annotation.KafkaStreamsDefaultConfiguration;
 import org.springframework.kafka.config.KafkaStreamsConfiguration;
+import org.springframework.kafka.config.StreamsBuilderFactoryBean;
+import org.springframework.kafka.core.CleanupConfig;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
@@ -25,7 +27,7 @@ import java.util.concurrent.ExecutionException;
  */
 @Configuration
 @EnableKafka
-@EnableKafkaStreams
+//@EnableKafkaStreams
 public class KafkaStreamsConfig {
 
     //constructor-injection doesn't work - don't know why
@@ -53,19 +55,27 @@ public class KafkaStreamsConfig {
             topicList.add(newTopic);
         }
 
-        if (!names.contains(appConfig.getSubscriptionTopic())) {
+        if (!names.contains(appConfig.getDeliveryTopic())) {
             Map<String, String> configs = new HashMap<String, String>();
             int partitions = 5;
             Short replication = 1;
-            NewTopic newTopic = new NewTopic(appConfig.getWinTopic(), partitions, replication).configs(configs);
+            NewTopic newTopic = new NewTopic(appConfig.getDeliveryTopic(), partitions, replication).configs(configs);
             topicList.add(newTopic);
         }
 
-        if (!names.contains(appConfig.getSubscriptionTopic())) {
+        if (!names.contains(appConfig.getNotificationTopic())) {
             Map<String, String> configs = new HashMap<String, String>();
             int partitions = 1;
             Short replication = 1;
-            NewTopic newTopic = new NewTopic(appConfig.getWinNotificationTopic(), partitions, replication).configs(configs);
+            NewTopic newTopic = new NewTopic(appConfig.getNotificationTopic(), partitions, replication).configs(configs);
+            topicList.add(newTopic);
+        }
+
+        if (!names.contains(appConfig.getNotificationCountTopic())) {
+            Map<String, String> configs = new HashMap<String, String>();
+            int partitions = 1;
+            Short replication = 1;
+            NewTopic newTopic = new NewTopic(appConfig.getNotificationCountTopic(), partitions, replication).configs(configs);
             topicList.add(newTopic);
         }
 
@@ -74,7 +84,6 @@ public class KafkaStreamsConfig {
         }
     }
 
-    @Bean(name = KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_CONFIG_BEAN_NAME)
     KafkaStreamsConfiguration kStreamsConfig() {
         Map<String, Object> props = new HashMap<>();
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "streams-app");
@@ -83,5 +92,10 @@ public class KafkaStreamsConfig {
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
 
         return new KafkaStreamsConfiguration(props);
+    }
+
+    @Bean(name = KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_BUILDER_BEAN_NAME)
+    public StreamsBuilderFactoryBean defaultKafkaStreamsBuilder() throws IOException {
+        return new StreamsBuilderFactoryBean(kStreamsConfig(), new CleanupConfig(this.appConfig.getCleanUpStatesOnStartup(), true));
     }
 }

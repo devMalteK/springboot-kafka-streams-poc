@@ -1,6 +1,7 @@
 package de.kochnetonline.sbkastp.config;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -22,11 +23,17 @@ public class AppConfig {
     private String subscriptionTopic;
 
     @NotBlank
-    private String winTopic;
+    private String deliveryTopic;
 
     @NotBlank
-    private String winNotificationTopic;
+    private String notificationTopic;
+
+    @NotBlank
+    private String notificationCountTopic;
 
     @NotBlank
     private String consumerGroup;
+
+    @NotNull
+    private Boolean cleanUpStatesOnStartup;
 }

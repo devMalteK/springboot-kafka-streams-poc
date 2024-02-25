@@ -8,6 +8,6 @@ import org.springframework.context.annotation.Configuration;
  * Native Images Hints for JacksonMapped Classes
  */
 @Configuration
-@RegisterReflectionForBinding({CustomerKey.class, Subscription.class, SubscritionState.class, Win.class, WinNotification.class})
+@RegisterReflectionForBinding({CustomerKey.class, SubscriptionEvent.class, SubscritionState.class, ParcelDeliveryEvent.class, NotificationEvent.class, DeliveryState.class})
 public class NativeImageHints {
 }

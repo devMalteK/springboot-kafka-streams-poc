@@ -1,15 +1,25 @@
 server:
   port: 5001
+spring:
+  application:
+    name: stream-app
+  mvc:
+    async:
+      request-timeout: 60s
 
 springdoc:
   api-docs:
     path: "/api-docs"
   swagger-ui:
     path: "/swagger-ui-custom.html"
+    operationsSorter: alpha
+    tagsSorter: alpha
 
 app:
   kafka-bootstrap-server: "http://localhost:9094"
   consumer-group: ${k8s_pod_name:${HOSTNAME:UNKNOWN}}
   subscription-topic: "subscription"
-  win-topic: "win"
-  win-notification-topic: "win-notification"
+  delivery-topic: "delivery"
+  notification-topic: "notification"
+  notification-count-topic: "notification-count"
+  clean-up-states-on-startup: true

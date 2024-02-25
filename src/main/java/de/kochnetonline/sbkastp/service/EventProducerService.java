@@ -4,10 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.kochnetonline.sbkastp.config.AppConfig;
 import de.kochnetonline.sbkastp.config.KafkaProducerConfig;
-import de.kochnetonline.sbkastp.model.CustomerKey;
-import de.kochnetonline.sbkastp.model.Subscription;
-import de.kochnetonline.sbkastp.model.SubscritionState;
-import de.kochnetonline.sbkastp.model.Win;
+import de.kochnetonline.sbkastp.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +16,7 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * produces a random Message every second
@@ -27,10 +24,12 @@ import java.util.concurrent.TimeoutException;
 @Service
 @Slf4j
 public class EventProducerService {
-    private KafkaProducerConfig kafkaProducerConfig;
-    private AppConfig appConfig;
+    private final KafkaProducerConfig kafkaProducerConfig;
+    private final AppConfig appConfig;
 
     private CompletableFuture<Void> bulkLoadTask;
+
+    private AtomicBoolean bulkloadStopped = new AtomicBoolean(false);
 
     private final static ObjectMapper objectMapper = new ObjectMapper();
 
@@ -39,57 +38,7 @@ public class EventProducerService {
         this.kafkaProducerConfig = kafkaProducerConfig;
         this.appConfig = appConfig;
     }
-    /*
-     *//**
-     * Topic 1 with low Record Count
-     * 1000 Records every 15 seconds
-     *
-     * @throws ExecutionException
-     * @throws InterruptedException
-     * @throws JsonProcessingException
-     * @throws TimeoutException
-     *//*
 
-    public void produceMessageForTopic1() throws ExecutionException, InterruptedException, JsonProcessingException, TimeoutException {
-        for (int i = 0; i < 1000; i++) {
-            var producerRecord = generateProducerRecord(appConfig.getSourceTopicName1());
-            kafkaProducerConfig.kafkaTemplate().send(producerRecord);
-
-            log.debug("Message sent topic: [{}] key: [{}] value: [{}]", producerRecord.topic(), producerRecord.key(), producerRecord.value());
-        }
-        kafkaProducerConfig.kafkaTemplate().flush();
-    }
-
-    */
-
-    /**
-     * Topic 1 with low Record Count
-     * 1000 Records every 5 seconds
-     *
-     * @throws ExecutionException
-     * @throws InterruptedException
-     * @throws JsonProcessingException
-     * @throws TimeoutException
-     *//*
-
-    public void produceMessageForTopic2() throws ExecutionException, InterruptedException, JsonProcessingException, TimeoutException {
-        for (int i = 0; i < 10000; i++) {
-            var producerRecord = generateProducerRecord(appConfig.getSourceTopicName2());
-            kafkaProducerConfig.kafkaTemplate().send(producerRecord);
-
-            log.debug("Message sent topic: [{}] key: [{}] value: [{}]", producerRecord.topic(), producerRecord.key(), producerRecord.value());
-        }
-        kafkaProducerConfig.kafkaTemplate().flush();
-    }
-
-    private ProducerRecord<String, String> generateProducerRecord(String topic) throws JsonProcessingException {
-        var messageKey = new CustomerKey(new Random().nextInt(10000));
-        var message = new MyKafkaMessage(LocalDateTime.now().toString(), UUID.randomUUID().toString());
-        var messageKeyString = objectMapper.writeValueAsString(messageKey);
-        var messageString = objectMapper.writeValueAsString(message);
-        var producerRecord = new ProducerRecord<>(topic, messageKeyString, messageString);
-        return producerRecord;
-    }*/
     public void sendSubscriptionEvent(Integer customerId, SubscritionState subscritionState, boolean flushDirectly) throws JsonProcessingException, ExecutionException, InterruptedException {
         var producerRecord = generateSubscrptionEventRecord(appConfig.getSubscriptionTopic(), customerId, subscritionState);
         kafkaProducerConfig.kafkaTemplate().send(producerRecord);
@@ -100,31 +49,33 @@ public class EventProducerService {
 
     private ProducerRecord<String, String> generateSubscrptionEventRecord(String topic, Integer customerId, SubscritionState subscritionState) throws JsonProcessingException {
         var messageKey = new CustomerKey(customerId);
-        var message = new Subscription(customerId, LocalDateTime.now().toString(), subscritionState);
+        var message = new SubscriptionEvent(customerId, LocalDateTime.now().toString(), customerId + "@myemail.com", subscritionState);
         var messageKeyString = objectMapper.writeValueAsString(messageKey);
         var messageString = objectMapper.writeValueAsString(message);
         return new ProducerRecord<>(topic, messageKeyString, messageString);
     }
 
-    public void sendWinEvent(Integer customerId, boolean flushDirectly) throws ExecutionException, InterruptedException, JsonProcessingException {
-        var producerRecord = generateWinEventRecord(appConfig.getWinTopic(), customerId);
+    public void sendDeliveryEvent(Integer customerId, String parcelId, DeliveryState deliveryState, boolean flushDirectly) throws ExecutionException, InterruptedException, JsonProcessingException {
+        var producerRecord = generateDeliveryEventRecord(appConfig.getDeliveryTopic(), customerId, parcelId, deliveryState);
         kafkaProducerConfig.kafkaTemplate().send(producerRecord);
         if (flushDirectly) {
             kafkaProducerConfig.kafkaTemplate().flush();
         }
     }
 
-    private ProducerRecord<String, String> generateWinEventRecord(String topic, Integer customerId) throws JsonProcessingException {
+    private ProducerRecord<String, String> generateDeliveryEventRecord(String topic, Integer customerId, String parcelId, DeliveryState deliveryState) throws JsonProcessingException {
         var messageKey = new CustomerKey(customerId);
-        var message = new Win(customerId, LocalDateTime.now().toString(), UUID.randomUUID().toString());
+        var message = new ParcelDeliveryEvent(customerId, parcelId, LocalDateTime.now().toString(), deliveryState);
         var messageKeyString = objectMapper.writeValueAsString(messageKey);
         var messageString = objectMapper.writeValueAsString(message);
         return new ProducerRecord<>(topic, messageKeyString, messageString);
     }
 
     public void startBulkLoad() {
-        if (this.bulkLoadTask == null || this.bulkLoadTask.isCancelled()) {
-            this.bulkLoadTask = CompletableFuture.runAsync(() -> {
+        this.bulkloadStopped.set(false);
+
+        if (this.bulkLoadTask == null || this.bulkLoadTask.isCancelled() || this.bulkLoadTask.isDone()) {
+            this.bulkLoadTask = CompletableFuture.supplyAsync(() -> {
 
                 //generate 1000 active subscribtions
                 for (int i = 0; i < 1000; i++) {
@@ -141,24 +92,24 @@ public class EventProducerService {
                     log.error("Error flushing Subscription Event", e);
                 }
 
-                //generate 100000 Win Events
+                //generate 100000 Delivery Events
                 for (int i = 0; i < 100000; i++) {
                     try {
-                        this.sendWinEvent(new Random().nextInt(100000), false);
+                        this.sendDeliveryEvent(new Random().nextInt(100000), UUID.randomUUID().toString(), new Random().nextBoolean() ? DeliveryState.DELIVERED : DeliveryState.IN_DELIVERY, false);
                     } catch (Exception e) {
-                        log.error("Error sending Win Event", e);
+                        log.error("Error sending Delivery Event", e);
                     }
                 }
 
                 try {
                     kafkaProducerConfig.kafkaTemplate().flush();
                 } catch (Exception e) {
-                    log.error("Error flushing Win Event", e);
+                    log.error("Error flushing Delivery Event", e);
                 }
 
                 StopWatch stopWatch = new StopWatch();
                 stopWatch.start();
-                while (true) {
+                while (bulkloadStopped.get()) {
 
                     //generate every 10 seconds a subscription change event
                     if (stopWatch.getTotalTimeSeconds() % 10 == 0) {
@@ -170,10 +121,10 @@ public class EventProducerService {
                         }
                     }
 
-                    //generate every 1 second a new win event
+                    //generate every 1 second a new Delivery Event
                     if (stopWatch.getTotalTimeMillis() % 1000 == 0) {
                         try {
-                            this.sendWinEvent(new Random().nextInt(100000), false);
+                            this.sendDeliveryEvent(new Random().nextInt(100000), UUID.randomUUID().toString(), new Random().nextBoolean() ? DeliveryState.DELIVERED : DeliveryState.IN_DELIVERY, false);
                         } catch (Exception e) {
                             log.error("Error sending Subscription Event", e);
                         }
@@ -181,14 +132,14 @@ public class EventProducerService {
                         try {
                             kafkaProducerConfig.kafkaTemplate().flush();
                         } catch (Exception e) {
-                            log.error("Error flushing Win Event", e);
+                            log.error("Error flushing Delivery Event", e);
                         }
                     }
 
                     //generate every 10 second for the subscribed customers
                     if (stopWatch.getTotalTimeSeconds() % 10 == 0) {
                         try {
-                            this.sendWinEvent(new Random().nextInt(1000), false);
+                            this.sendDeliveryEvent(new Random().nextInt(1000), UUID.randomUUID().toString(), DeliveryState.DELIVERED, false);
                         } catch (Exception e) {
                             log.error("Error sending Subscription Event", e);
                         }
@@ -196,15 +147,17 @@ public class EventProducerService {
                         try {
                             kafkaProducerConfig.kafkaTemplate().flush();
                         } catch (Exception e) {
-                            log.error("Error flushing Win Event", e);
+                            log.error("Error flushing Delivery Event", e);
                         }
                     }
                 }
+                return null;
             });
         }
     }
 
     public void stopBulkLoad() {
+        this.bulkloadStopped.set(true);
         this.bulkLoadTask.cancel(true);
     }
 }

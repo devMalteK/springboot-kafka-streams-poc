@@ -9,10 +9,10 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class WinNotification implements Serializable {
+public class SubscriptionEvent implements Serializable {
     private Integer customerId;
-    private String subscriptionTimestamp;
-    private de.kochnetonline.sbkastp.model.SubscritionState subscritionState;
-    private String winTimestamp;
-    private String present;
+    private String createTimestamp;
+    private String emailAdress;
+    private SubscritionState subscritionState;
 }
+

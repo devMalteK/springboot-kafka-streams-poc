@@ -9,9 +9,9 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Subscription implements Serializable {
+public class ParcelDeliveryEvent implements Serializable {
     private Integer customerId;
+    private String parcelId;
     private String createTimestamp;
-    private de.kochnetonline.sbkastp.model.SubscritionState subscritionState;
+    private DeliveryState deliveryState;
 }
-

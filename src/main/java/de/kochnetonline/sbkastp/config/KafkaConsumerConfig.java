@@ -3,6 +3,7 @@ package de.kochnetonline.sbkastp.config;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.validation.ValidationException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,9 +14,12 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.MicrometerConsumerListener;
+import org.springframework.kafka.core.reactive.ReactiveKafkaConsumerTemplate;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.DefaultErrorHandler;
+import reactor.kafka.receiver.ReceiverOptions;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,6 +28,7 @@ import java.util.Map;
  */
 @Configuration
 @EnableKafka
+@Slf4j
 public class KafkaConsumerConfig {
 
     //constructor-injection doesn't work - don't know why
@@ -63,4 +68,22 @@ public class KafkaConsumerConfig {
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.RECORD);
         return factory;
     }
+
+    private ReceiverOptions<String, String> kafkaReceiverOptions(String topic, String consumerSessionID) {
+        Map<String, Object> config = new HashMap<>();
+        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, appConfig.getKafkaBootstrapServer());
+        config.put(ConsumerConfig.GROUP_ID_CONFIG, appConfig.getConsumerGroup() + "_reactive_" + consumerSessionID);
+        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
+
+        ReceiverOptions<String, String> basicReceiverOptions = ReceiverOptions.create(config);
+        return basicReceiverOptions.subscription(Collections.singletonList(topic));
+    }
+
+    
+    public ReactiveKafkaConsumerTemplate<String, String> reactiveKafkaConsumerTemplate(String topic, String consumerSessionID) {
+        return new ReactiveKafkaConsumerTemplate<String, String>(kafkaReceiverOptions(topic, consumerSessionID));
+    }
+
 }
